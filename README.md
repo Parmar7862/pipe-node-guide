@@ -15,38 +15,49 @@ We have been running the pipe node on Devnet, now we will run it on testnet
 * Linux (Ubuntu 24.00 Only, lower version of ubuntu is not supported)
 
 #
-
-## Stop Old Node
-if you have running a devnet node previously, you need to do these steps first.
+	
+### Stop Old Node
+If you have running a devnet node previously, you need to do these steps first.
 
 ### 1. Backup `Node Info File`
 You will need to backup old `node_info.json` file which you can find in pipe folder in your `root` directory.
 
+Save the file
+```
+nano ~/node_info.json
+```
+
 ### 2. Stop old node
-```bash
+```
 sudo systemctl stop pipe
 sudo systemctl disable pipe
 sudo systemctl daemon-reload
 ```
 
-### 3. Open Ports
-```bash
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw reload
-```
+---
 
-## Node Setup
-### 1. Install Dependencies
+1️⃣ Install Dependencies
 ```
-sudo apt update
+sudo apt-get update && sudo apt-get upgrade -y
+```
+```
+sudo apt install curl iptables build-essential git wget lz4 jq make gcc nano automake autoconf tmux htop nvme-cli libgbm1 pkg-config libssl-dev libleveldb-dev tar clang bsdmainutils ncdu unzip libleveldb-dev  -y
 ```
 ```
 sudo apt install -y libssl-dev ca-certificates
 ```
 
-### 2. Create System Configuration
-- Copy the below command whole and run in your terminal
+2️⃣ Enable Firewall & Open Ports
+```
+sudo ufw allow ssh
+sudo ufw enable
+
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw reload
+```
+
+3️⃣ Create System Configuration
 ```
 sudo bash -c 'cat > /etc/sysctl.d/99-popcache.conf << EOL
 net.ipv4.ip_local_port_range = 1024 65535
@@ -60,8 +71,6 @@ net.ipv4.tcp_rmem = 4096 87380 16777216
 net.core.wmem_max = 16777216
 net.core.rmem_max = 16777216
 EOL'
-```
-```
 sudo sysctl -p /etc/sysctl.d/99-popcache.conf
 ```
 ```
@@ -70,9 +79,9 @@ sudo bash -c 'cat > /etc/security/limits.d/popcache.conf << EOL
 *    soft nofile 65535
 EOL'
 ```
-Now Restart your terminal and if you are using VPS restart it too.
+Now close ur VPS or WSL or Ubuntu Then Open again ur VPS or WSL
 
-### 3. Create directories
+4️⃣ Make Directory (create folder to be used for download cache)
 ```
 sudo mkdir -p /opt/popcache
 sudo mkdir -p /opt/popcache/logs
@@ -80,24 +89,31 @@ sudo mkdir -p /opt/popcache/logs
 ```
 cd /opt/popcache
 ```
-### 4. Download Pipe binaries
-1. Visit: [Download](https://download.pipe.network/) file (use invite code from email)
-2. Once Downloaded move the downloaded file in `/opt/popcache` you created in step 3, you will find it in your Ubuntu/home/user
 
+5️⃣ Download Pipe Binaries
+1. Visit: [Download](https://download.pipe.network/) file (use invite code from email)
+
+2.A For Local PC
+```
+sudo cp -r /mnt/c/Users/ASUS/Downloads/File /opt/popcache/
+```
+Replace "c/Users/ASUS/Downloads/File" to your Actual File Path in ur System
+
+2.B For VPS (Run in Powershell or Command Prompt)
+```
+scp -r "C:\Users\ASUS\Downloads\File" root@VPS_IP:/opt/popcache/
+```
+Replace "C:\Users\ASUS\Downloads\File" to your Actual File Path in ur System and VPS_IP with ur Actual VPS IP
 ```
 sudo tar -xzf pop-v0.3.0-linux-*.tar.gz
 ```
 ```
 sudo chmod +x /opt/popcache/pop
 ```
-### Check pop file
-```
-pop --help
-```
 
-### 5. Setup Config File
+6️⃣ Setup Config File
 ```
-sudo nano config.json
+nano config.json
 ```
 ```
 {
@@ -132,11 +148,14 @@ sudo nano config.json
   }
 }
 ```
-Setup Configuration according to you
+Then save - CTRL+X Then Enter "Y" Then Enter
+
 - `pop-location`: location of VPS --> Command to Check --> `realpath --relative-to /usr/share/zoneinfo /etc/localtime`
 - `website`: Anything you prefer (can use github profile)
 
-4. Create systemd file
+
+
+7️⃣ Creating a Systemd Service File
 ```
 sudo bash -c 'cat > /etc/systemd/system/popcache.service << EOL
 [Unit]
@@ -160,7 +179,8 @@ Environment=POP_CONFIG_PATH=/opt/popcache/config.json
 WantedBy=multi-user.target
 EOL'
 ```
-## Start the Node
+
+8️⃣ Run Node
 ```
 sudo systemctl daemon-reload
 ```
@@ -171,26 +191,51 @@ sudo systemctl enable popcache
 sudo systemctl start popcache
 ```
 
-### 5. Check health
-**1. Check status**
+# Open Another Window for WSL or VPS
+
+## Monitor your Node Status & Logs
 ```
 sudo systemctl status popcache
 ```
-**2. Check logs**
 ```
 sudo journalctl -u popcache
 ```
 
-### Optional: Restart or Stop Node
-```console
-# Stop
-sudo systemctl stop popcache
 
-# Restart
+## 🔶For Next Day Run This Command
+
+#1 Open WSL and Put this Command 
+```
+cd /opt/popcache
+```
+```
+sudo systemctl daemon-reload
+```
+```
+sudo systemctl enable popcache
+```
+```
+sudo systemctl start popcache
+```
+
+### Optional: Restart or Stop Node
+Stop
+```
+sudo systemctl stop popcache
+```
+
+Restart
+```
 cd /opt/popcache
 sudo systemctl daemon-reload
 sudo systemctl enable popcache
 sudo systemctl restart popcache
 ```
 
----
+## Delete Pipe node
+```
+cd /data
+sudo rm -rf /opt/popcache  # Deletes the 'popcache' binary
+sudo rm -f config.json  # Deletes the 'node_info.json' file
+```
+
