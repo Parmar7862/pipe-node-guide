@@ -113,7 +113,7 @@ sudo chmod +x /opt/popcache/pop
 
 6️⃣ Setup Config File
 ```
-nano config.json
+sudo nano config.json
 ```
 ```
 {
